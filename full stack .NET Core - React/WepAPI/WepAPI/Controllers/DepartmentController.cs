@@ -40,6 +40,7 @@ namespace WepAPI.Controllers
 			}
 
 			return new JsonResult(table);
+
 		}
 
 		[HttpPost]
@@ -48,26 +49,9 @@ namespace WepAPI.Controllers
 			string query = @"
 					insert into dbo.Department values('" + dep.DepartmentName + @"')
 					";
-			//$"insert into dbo.Department values('{dep.DepartmentName}'";
 
-			DataTable table = new DataTable();
-			// db connection string
-			string sqlDataSource = _configuration.GetConnectionString("EmployeeAppCon");
-			SqlDataReader myReader;
-			using (SqlConnection myCon = new SqlConnection(sqlDataSource))
-			{
-				myCon.Open();
-				using (SqlCommand myCommand = new SqlCommand(query, myCon))
-				{
-					myReader = myCommand.ExecuteReader();
-					table.Load(myReader);
+			return SetupRequest(query, "Added Successfully");
 
-					myReader.Close();
-					myCon.Close();
-				}
-			}
-
-			return new JsonResult("Added Successfully");
 		}
 
 		[HttpPut]
@@ -79,24 +63,7 @@ namespace WepAPI.Controllers
 					where DepartmentId = " + dep.DepartmentId + @"
 					";
 
-			DataTable table = new DataTable();
-			// db connection string
-			string sqlDataSource = _configuration.GetConnectionString("EmployeeAppCon");
-			SqlDataReader myReader;
-			using (SqlConnection myCon = new SqlConnection(sqlDataSource))
-			{
-				myCon.Open();
-				using (SqlCommand myCommand = new SqlCommand(query, myCon))
-				{
-					myReader = myCommand.ExecuteReader();
-					table.Load(myReader);
-
-					myReader.Close();
-					myCon.Close();
-				}
-			}
-
-			return new JsonResult("Updated Successfully");
+			return SetupRequest(query, "Updated Successfully");
 		}
 
 		[HttpDelete("{id}")]
@@ -107,6 +74,11 @@ namespace WepAPI.Controllers
 					where DepartmentId = " + id + @"
 					";
 
+			return SetupRequest(query, "Deleted Successfully");
+		}
+
+		JsonResult SetupRequest(string query, string msg)
+		{
 			DataTable table = new DataTable();
 			// db connection string
 			string sqlDataSource = _configuration.GetConnectionString("EmployeeAppCon");
@@ -124,7 +96,8 @@ namespace WepAPI.Controllers
 				}
 			}
 
-			return new JsonResult("Deleted Successfully");
+			return new JsonResult(msg);
+
 		}
 	}
 }
