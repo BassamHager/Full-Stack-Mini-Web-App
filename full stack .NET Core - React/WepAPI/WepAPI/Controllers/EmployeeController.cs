@@ -1,26 +1,33 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using WepAPI.models;
 
 namespace WepAPI.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-	public class DepartmentController : ControllerBase
+	public class EmployeeController : ControllerBase
 	{
 		private readonly IConfiguration _configuration;
 
-		public DepartmentController(IConfiguration configuration)
-		{
-			_configuration = configuration;
-		}
+		public EmployeeController(IConfiguration configuration) => _configuration = configuration;
 
 		[HttpGet]
 		public JsonResult Get()
 		{
-			string query = @"select DepartmentId, DepartmentName from dbo.Department";
+			string query = @"
+						select EmployeeId, EmployeeName, Department, 
+						convert(varchar(10),DateOfJoining,120) as DateOfJoining
+						,PhotoFileName
+						from dbo.Employee
+						";
 
 			DataTable table = new DataTable();
 			// db connection string
@@ -40,14 +47,14 @@ namespace WepAPI.Controllers
 			}
 
 			return new JsonResult(table);
-
 		}
 
 		[HttpPost]
-		public JsonResult Post(Department dep)
+		public JsonResult Post(Employee emp)
 		{
 			string query = @"
-					insert into dbo.Department values('" + dep.DepartmentName + @"')
+					insert into dbo.Employee (EmployeeName,Department,DateOfJoining,PhotoFileName)
+					values('" + emp.EmployeeName + @"','" + emp.Department + @"','" + emp.DateOfJoining + @"','" + emp.PhotoFileName + @"')
 					";
 
 			return SetupRequest(query, "Added Successfully");
@@ -55,12 +62,14 @@ namespace WepAPI.Controllers
 		}
 
 		[HttpPut]
-		public JsonResult Put(Department dep)
+		public JsonResult Put(Employee emp)
 		{
 			string query = @"
-					update dbo.Department set
-					DepartmentName = '" + dep.DepartmentName + @"'
-					where DepartmentId = " + dep.DepartmentId + @"
+					update dbo.Employee set
+					EmployeeName = '" + emp.EmployeeName + @"'
+					,Department = '" + emp.Department + @"'
+					,DateOfJoining = '" + emp.DateOfJoining + @"'
+					where EmployeeId = " + emp.EmployeeId + @"
 					";
 
 			return SetupRequest(query, "Updated Successfully");
@@ -70,8 +79,8 @@ namespace WepAPI.Controllers
 		public JsonResult Delete(int id)
 		{
 			string query = @"
-					delete from dbo.Department
-					where DepartmentId = " + id + @"
+					delete from dbo.Employee
+					where EmployeeId = " + id + @"
 					";
 
 			return SetupRequest(query, "Deleted Successfully");
