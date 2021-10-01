@@ -1,8 +1,40 @@
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Table } from "react-bootstrap";
 
 const Department = () => {
+  const [deps, setDeps] = useState([]);
+
+  const refreshList = useCallback(async () => {
+    const fetched = await fetch(process.env.REACT_APP_API + "department");
+    const jsonRes = await fetched.json();
+    setDeps(jsonRes);
+  }, [setDeps]);
+
+  useEffect(() => {
+    refreshList();
+  }, [refreshList]);
+
   return (
-    <div className="mt-5 d-flex justify-content-left">Department page</div>
+    <div>
+      <Table className="mt-4" striped bordered hover size="sm">
+        <thead>
+          <tr>
+            <th>DepartmentId</th>
+            <th>DepartmentName</th>
+            <th>Options</th>
+          </tr>
+        </thead>
+        <tbody>
+          {deps.map((dep) => (
+            <tr key={dep.DepartmentId}>
+              <td>{dep.DepartmentId}</td>
+              <td>{dep.DepartmentName}</td>
+              <td>Edit / Delete</td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </div>
   );
 };
 
