@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -16,8 +18,14 @@ namespace WepAPI.Controllers
 	public class EmployeeController : ControllerBase
 	{
 		private readonly IConfiguration _configuration;
+		private readonly IWebHostEnvironment _env;
 
-		public EmployeeController(IConfiguration configuration) => _configuration = configuration;
+		public EmployeeController(IConfiguration configuration, IWebHostEnvironment env)
+		{
+			_configuration = configuration;
+			_env = env;
+
+		}
 
 		[HttpGet]
 		public JsonResult Get()
@@ -86,6 +94,62 @@ namespace WepAPI.Controllers
 			return SetupRequest(query, "Deleted Successfully");
 		}
 
+		[Route("GetAllDepartmentNames")]
+		public JsonResult GetAllDepartmentNames()
+		{
+			string query = @"
+						select DepartmentName from dbo.Department	
+						";
+
+			DataTable table = new DataTable();
+			// db connection string
+			string sqlDataSource = _configuration.GetConnectionString("EmployeeAppCon");
+			SqlDataReader myReader;
+			using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+			{
+				myCon.Open();
+				using (SqlCommand myCommand = new SqlCommand(query, myCon))
+				{
+					myReader = myCommand.ExecuteReader();
+					table.Load(myReader);
+
+					myReader.Close();
+					myCon.Close();
+				}
+			}
+
+			return new JsonResult(table);
+		}
+
+
+		[Route("SaveFile")]
+		[HttpPost]
+		public IActionResult SaveFile()
+		{
+			try
+			{
+				var httpRequest = Request?.Form;
+				var postedFile = httpRequest?.Files[0];
+				var fileName = postedFile?.FileName;
+				var physicalPath = _env.ContentRootPath + "/Photos/" + fileName;
+
+				using (var stream = new FileStream(physicalPath, FileMode.Create))
+				{
+					postedFile?.CopyTo(stream);
+				}
+
+				return new JsonResult(fileName);
+
+			}
+			catch (Exception e)
+			{
+				return BadRequest();
+			}
+		}
+
+
+
+		// helper function
 		JsonResult SetupRequest(string query, string msg)
 		{
 			DataTable table = new DataTable();
